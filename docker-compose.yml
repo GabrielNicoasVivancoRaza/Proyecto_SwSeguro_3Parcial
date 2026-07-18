@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: master-gateway-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-master}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-master_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-master_gateway}
+    ports:
+      # 5544 en el host porque hay instancias locales de PostgreSQL en 5432 y 5433
+      - '5544:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U master -d master_gateway']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

@@ -1,0 +1,153 @@
+// Esquema del Microservicio Maestro (Master Gateway)
+// Todas las entidades cumplen el Patrón de Auditoría y Estado Global:
+// id UUID, estado (soft delete), fecha_creacion, fecha_actualizacion,
+// creado_por, actualizado_por — incluidas las tablas pivote M:N.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Estado {
+  ACTIVO
+  INACTIVO
+}
+
+// ============ IDENTIDAD ============
+
+model Usuario {
+  id                 String   @id @default(uuid()) @db.Uuid
+  email              String   @unique
+  username           String   @unique
+  passwordHash       String   @map("password_hash")
+  nombreCompleto     String   @map("nombre_completo")
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  roles UsuarioRol[]
+
+  @@map("usuarios")
+}
+
+model Rol {
+  id                 String   @id @default(uuid()) @db.Uuid
+  nombre             String   @unique
+  descripcion        String?
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  usuarios UsuarioRol[]
+  modulos  RolModulo[]
+  menus    RolMenu[]
+
+  @@map("roles")
+}
+
+// Tabla pivote Usuario <-> Rol (M:N) con auditoría propia
+model UsuarioRol {
+  id                 String   @id @default(uuid()) @db.Uuid
+  usuarioId          String   @map("usuario_id") @db.Uuid
+  rolId              String   @map("rol_id") @db.Uuid
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  rol     Rol     @relation(fields: [rolId], references: [id])
+
+  @@unique([usuarioId, rolId])
+  @@map("usuario_has_roles")
+}
+
+// ============ MÓDULOS Y MENÚS ============
+
+model Modulo {
+  id                 String   @id @default(uuid()) @db.Uuid
+  nombre             String   @unique
+  descripcion        String?
+  icono              String?
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  menus Menu[]
+  roles RolModulo[]
+
+  @@map("modulos")
+}
+
+// Tabla pivote Rol <-> Módulo (M:N) con auditoría propia
+model RolModulo {
+  id                 String   @id @default(uuid()) @db.Uuid
+  rolId              String   @map("rol_id") @db.Uuid
+  moduloId           String   @map("modulo_id") @db.Uuid
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  rol    Rol    @relation(fields: [rolId], references: [id])
+  modulo Modulo @relation(fields: [moduloId], references: [id])
+
+  @@unique([rolId, moduloId])
+  @@map("rol_has_modulos")
+}
+
+// Menú recursivo — patrón Adjacency List en una sola tabla.
+// parent_id NULL  => Menú Principal
+// parent_id valor => Submenú o Item
+// url solo se llena en nodos hoja (Items) que enlazan al microservicio destino.
+model Menu {
+  id                 String   @id @default(uuid()) @db.Uuid
+  nombre             String
+  url                String?
+  icono              String?
+  orden              Int      @default(0)
+  moduloId           String   @map("modulo_id") @db.Uuid
+  parentId           String?  @map("parent_id") @db.Uuid
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  modulo Modulo @relation(fields: [moduloId], references: [id])
+  parent Menu?  @relation("MenuJerarquia", fields: [parentId], references: [id])
+  hijos  Menu[] @relation("MenuJerarquia")
+  roles  RolMenu[]
+
+  @@map("menus")
+}
+
+// Tabla pivote Rol <-> Menú (M:N) con auditoría propia
+model RolMenu {
+  id                 String   @id @default(uuid()) @db.Uuid
+  rolId              String   @map("rol_id") @db.Uuid
+  menuId             String   @map("menu_id") @db.Uuid
+  estado             Estado   @default(ACTIVO)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  creadoPor          String?  @map("creado_por") @db.Uuid
+  actualizadoPor     String?  @map("actualizado_por") @db.Uuid
+
+  rol  Rol  @relation(fields: [rolId], references: [id])
+  menu Menu @relation(fields: [menuId], references: [id])
+
+  @@unique([rolId, menuId])
+  @@map("rol_has_menus")
+}
