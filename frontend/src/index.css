@@ -1,0 +1,242 @@
+:root {
+  --fondo: #f4f5f7;
+  --tarjeta: #ffffff;
+  --primario: #1f3a5f;
+  --primario-claro: #2e5488;
+  --texto: #1f2430;
+  --texto-suave: #6a7180;
+  --borde: #e1e4ea;
+  --error: #c0392b;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--texto);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+}
+
+/* ===== Pantallas de login / selector de rol ===== */
+
+.pantalla-centrada {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tarjeta {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 8px 24px rgba(31, 58, 95, 0.08);
+}
+
+.tarjeta h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primario);
+}
+
+.subtitulo {
+  margin: 0 0 8px;
+  color: var(--texto-suave);
+}
+
+.tarjeta label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tarjeta input {
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.tarjeta input:focus {
+  outline: 2px solid var(--primario-claro);
+  border-color: transparent;
+}
+
+.tarjeta button[type='submit'] {
+  margin-top: 8px;
+  padding: 11px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primario);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tarjeta button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.error {
+  margin: 0;
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+/* ===== Workspace Selector ===== */
+
+.lista-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.boton-rol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--tarjeta);
+  cursor: pointer;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.boton-rol:hover {
+  border-color: var(--primario-claro);
+  background: #f2f6fc;
+}
+
+.boton-rol span {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+/* ===== Dashboard ===== */
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--primario);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.sidebar-cabecera {
+  padding: 0 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-cabecera h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.chip-rol {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.78rem;
+}
+
+.sidebar nav {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 10px;
+}
+
+.bloque-modulo h3 {
+  margin: 14px 16px 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.menu,
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu .grupo {
+  display: block;
+  padding: 7px 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.menu .item {
+  display: block;
+  padding: 7px 12px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.menu .item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.menu .item.activo {
+  background: rgba(255, 255, 255, 0.12);
+  border-left-color: #fff;
+  color: #fff;
+}
+
+.boton-salir {
+  margin: 12px 16px 0;
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.boton-salir:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.contenido {
+  flex: 1;
+  padding: 32px 40px;
+}
+
+.contenido h1 {
+  margin-top: 0;
+  color: var(--primario);
+}
+
+.contenido code {
+  background: #e8ebf1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
