@@ -19,6 +19,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  // CORS restringido al origen del frontend (no usar '*' con credenciales)
+  app.enableCors({
+    origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
