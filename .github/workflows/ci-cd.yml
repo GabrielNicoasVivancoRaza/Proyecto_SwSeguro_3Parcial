@@ -1,0 +1,196 @@
+name: CI/CD Master Gateway
+
+# Requisito del PDF (Anexo, sección "Pipeline CI/CD con GitHub Actions"):
+# el pipeline completo (build+tests -> SonarCloud -> SAST avanzado -> deploy)
+# se dispara al hacer push o merge en la rama main.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-cd-main
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ---------- Notificación: Inicio del Pipeline en main ----------
+  notify-start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notificar inicio del pipeline
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 scripts/notify_telegram.py "🚀 *Pipeline iniciado* en \`main\` — commit \`${{ github.sha }}\` por ${{ github.actor }}"
+
+  # ---------- Fase 1: Build y Pruebas Unitarias ----------
+  build-test:
+    needs: notify-start
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias del backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Build backend (NestJS)
+        working-directory: backend
+        run: npm run build
+
+      - name: Pruebas unitarias de seguridad + cobertura
+        working-directory: backend
+        run: npm run test:cov
+
+      - name: Instalar y compilar frontend (React SPA)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publicar cobertura para SonarCloud
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: backend/coverage
+          retention-days: 1
+
+  # ---------- Fase 2: Análisis Estático Tradicional (SonarCloud) ----------
+  sonarcloud:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SonarCloud necesita historial completo para el blame
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-backend
+          path: backend/coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Verificar Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Notificar Quality Gate exitoso
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/notify_telegram.py "✅ *Quality Gate de SonarCloud: PASSED* (commit \`${{ github.sha }}\`)"
+
+      - name: Notificar Quality Gate fallido
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/notify_telegram.py "❌ *SonarCloud rechazó el código* (Quality Gate FAILED). Pipeline detenido."
+
+  # ---------- Fase 3: SAST Avanzado (Modelo de Minería de Datos/ML) ----------
+  sast-avanzado:
+    needs: sonarcloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar motor de reglas de seguridad (Semgrep)
+        run: pip install semgrep
+
+      - name: Ejecutar análisis SAST avanzado sobre el diff (.ts/.py)
+        run: |
+          python3 scripts/sast_ml_scan.py --base-ref "${{ github.event.before }}"
+
+      - name: Notificar alerta de vulnerabilidad detectada
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 scripts/notify_telegram.py "⚠️ *ALERTA:* el modelo SAST detectó patrones sospechosos de vulnerabilidades en \`${{ github.sha }}\`. Pipeline detenido, revisar logs del job."
+
+  # ---------- Fase 4: Despliegue Automático (Render, vía CLI) ----------
+  deploy:
+    needs: sast-avanzado
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar si Render ya está configurado
+        id: check
+        run: |
+          if [ -z "${{ secrets.RENDER_API_KEY }}" ] || [ -z "${{ secrets.RENDER_SERVICE_ID }}" ]; then
+            echo "configurado=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configurado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Render aún no configurado (se omite el despliegue)
+        if: steps.check.outputs.configurado == 'false'
+        run: |
+          echo "RENDER_API_KEY / RENDER_SERVICE_ID no están en Secrets todavía."
+          echo "Ver docs/AVANCE_5_DevSecOps.md, sección 'Configurar Render', para habilitar este paso."
+
+      - name: Instalar Render CLI
+        if: steps.check.outputs.configurado == 'true'
+        run: curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+
+      - name: Notificar validación de seguridad completa
+        if: steps.check.outputs.configurado == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/notify_telegram.py "🔒 Seguridad validada. Desplegando en Render…"
+
+      # Requisito del PDF: el despliegue debe dispararse por la CLI del
+      # proveedor DENTRO del pipeline (no por el auto-deploy-on-push nativo
+      # de Render), para garantizar que ya pasó SonarCloud y el SAST.
+      # Recordar desactivar "Auto-Deploy" en el dashboard del servicio de Render.
+      - name: Desplegar en Render (CLI, no webhook automático)
+        if: steps.check.outputs.configurado == 'true'
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: render deploys create "${{ secrets.RENDER_SERVICE_ID }}" --wait --confirm --output json
+
+      - name: Notificar despliegue exitoso
+        if: steps.check.outputs.configurado == 'true' && success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/notify_telegram.py "🟢 *Despliegue en producción exitoso* en Render (commit \`${{ github.sha }}\`)"
+
+      - name: Notificar fallo de despliegue
+        if: steps.check.outputs.configurado == 'true' && failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/notify_telegram.py "🔴 *Fallo en el despliegue* a Render. Revisar logs del job 'deploy'."

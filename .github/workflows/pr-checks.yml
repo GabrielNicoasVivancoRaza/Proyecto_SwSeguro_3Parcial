@@ -1,0 +1,42 @@
+name: PR Checks (build + tests)
+
+# Complemento al pipeline del PDF: valida cada Pull Request ANTES de que
+# llegue a dev/test/main, para no depender únicamente del pipeline de main
+# como primera línea de defensa (Shift-Left real: fallar lo antes posible).
+on:
+  pull_request:
+    branches: [dev, test, main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias del backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Pruebas unitarias
+        working-directory: backend
+        run: npm test
+
+      - name: Instalar y compilar frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
