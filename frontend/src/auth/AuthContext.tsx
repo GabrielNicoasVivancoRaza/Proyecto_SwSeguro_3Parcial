@@ -18,6 +18,14 @@ interface ContextoAuth {
   login: (email: string, password: string) => Promise<void>;
   seleccionarRol: (roleId: string) => Promise<void>;
   logout: () => Promise<void>;
+  /**
+   * Vuelve a pedir /menus/tree con el AccessToken actual y actualiza la
+   * sesión en memoria y en sessionStorage. El árbol de menús se resuelve
+   * una sola vez en select-role y queda "congelado" en el token/sesión —
+   * si un administrador agrega o reasigna un menú mientras el usuario ya
+   * tiene la sesión abierta, esto permite verlo sin cerrar sesión.
+   */
+  refrescarMenus: () => Promise<void>;
 }
 
 const AuthContext = createContext<ContextoAuth | null>(null);
@@ -70,6 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [pendiente],
   );
 
+  const refrescarMenus = useCallback(async () => {
+    if (!sesion) return;
+    const arbol = await api.get<ModuloConMenus[]>('/menus/tree');
+    const actualizada: Sesion = { ...sesion, menus: arbol.data };
+    guardarSesion(actualizada);
+    setSesion(actualizada);
+  }, [sesion]);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -83,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ pendiente, sesion, login, seleccionarRol, logout }}
+      value={{ pendiente, sesion, login, seleccionarRol, logout, refrescarMenus }}
     >
       {children}
     </AuthContext.Provider>

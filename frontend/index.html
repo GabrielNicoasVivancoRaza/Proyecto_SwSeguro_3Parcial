@@ -9,13 +9,23 @@
     <!-- Tipografía (Inter) y librería de íconos, vía CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Google Fonts no admite integrity/SRI: el CSS que devuelve varía según
+      el User-Agent (distintos formatos woff2 por navegador), así que un hash
+      fijo rompería la carga en algunos clientes — limitación documentada por
+      Google, no un descuido. Se agrega crossorigin igualmente por higiene.
+    -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
+      crossorigin="anonymous"
     />
+    <!-- Versión fijada (1.11.3): sí se puede validar con SRI -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+"
+      crossorigin="anonymous"
     />
   </head>
   <body>

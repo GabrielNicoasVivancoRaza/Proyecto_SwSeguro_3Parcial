@@ -17,7 +17,11 @@ export default function Modal({ titulo, onClose, children }: Props) {
   }, [onClose]);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    // El fondo es un backdrop decorativo: el cierre por clic es un atajo para
+    // mouse, no un control semántico — el equivalente por teclado ya existe
+    // (Escape, manejado arriba, y el botón de cierre). role="presentation"
+    // lo saca del árbol de accesibilidad en vez de fingir que es interactivo.
+    <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
         className="modal-caja"
         role="dialog"
