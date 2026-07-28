@@ -105,14 +105,16 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 scripts/notify_telegram.py "✅ *Quality Gate de SonarCloud: PASSED* (commit \`${{ github.sha }}\`)"
+        run: |
+          python3 scripts/notify_telegram.py "✅ *Quality Gate de SonarCloud: PASSED* (commit \`${{ github.sha }}\`)"
 
       - name: Notificar Quality Gate fallido
         if: failure()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 scripts/notify_telegram.py "❌ *SonarCloud rechazó el código* (Quality Gate FAILED). Pipeline detenido."
+        run: |
+          python3 scripts/notify_telegram.py "❌ *SonarCloud rechazó el código* (Quality Gate FAILED). Pipeline detenido."
 
   # ---------- Fase 3: SAST Avanzado (Modelo de Minería de Datos/ML) ----------
   sast-avanzado:
@@ -178,7 +180,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 scripts/notify_telegram.py "🔒 Seguridad validada. Desplegando en Render…"
+        run: |
+          python3 scripts/notify_telegram.py "🔒 Seguridad validada. Desplegando en Render…"
 
       # Requisito del PDF: el despliegue debe dispararse por la CLI del
       # proveedor DENTRO del pipeline (no por el auto-deploy-on-push nativo
@@ -195,11 +198,13 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 scripts/notify_telegram.py "🟢 *Despliegue en producción exitoso* en Render (commit \`${{ github.sha }}\`)"
+        run: |
+          python3 scripts/notify_telegram.py "🟢 *Despliegue en producción exitoso* en Render (commit \`${{ github.sha }}\`)"
 
       - name: Notificar fallo de despliegue
         if: steps.check.outputs.configurado == 'true' && failure()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 scripts/notify_telegram.py "🔴 *Fallo en el despliegue* a Render. Revisar logs del job 'deploy'."
+        run: |
+          python3 scripts/notify_telegram.py "🔴 *Fallo en el despliegue* a Render. Revisar logs del job 'deploy'."
