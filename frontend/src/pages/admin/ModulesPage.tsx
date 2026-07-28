@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { mensajeError, modulosApi, type Modulo } from '../../api/resources';
+import AccionesFila from '../../components/AccionesFila';
+import EstadoBadge from '../../components/EstadoBadge';
 import Modal from '../../components/Modal';
+import ModalFormFooter from '../../components/ModalFormFooter';
 
 const FORM_VACIO = { nombre: '', descripcion: '', icono: '' };
 
@@ -98,14 +101,12 @@ export default function ModulesPage() {
               />
             </label>
           </div>
-          <div className="acciones-form">
-            <button className="boton-primario" onClick={guardar}>
-              <i className="bi bi-check-lg" /> {editandoId ? 'Guardar cambios' : 'Crear módulo'}
-            </button>
-            <button className="boton-secundario" onClick={() => setMostrarForm(false)}>
-              Cancelar
-            </button>
-          </div>
+          <ModalFormFooter
+            editando={!!editandoId}
+            textoCrear="Crear módulo"
+            onGuardar={guardar}
+            onCancelar={() => setMostrarForm(false)}
+          />
         </Modal>
       )}
 
@@ -127,18 +128,9 @@ export default function ModulesPage() {
                 <td>{m.nombre}</td>
                 <td>{m.descripcion ?? '—'}</td>
                 <td>
-                  <span className={`badge-estado ${m.estado === 'ACTIVO' ? 'ok' : 'off'}`}>
-                    {m.estado}
-                  </span>
+                  <EstadoBadge estado={m.estado} />
                 </td>
-                <td className="celda-acciones">
-                  <button onClick={() => abrirEditar(m)}>
-                    <i className="bi bi-pencil" /> Editar
-                  </button>
-                  <button className="boton-peligro" onClick={() => eliminar(m)}>
-                    <i className="bi bi-trash" /> Eliminar
-                  </button>
-                </td>
+                <AccionesFila onEditar={() => abrirEditar(m)} onEliminar={() => eliminar(m)} />
               </tr>
             ))}
           </tbody>

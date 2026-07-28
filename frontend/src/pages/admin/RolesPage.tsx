@@ -8,11 +8,16 @@ import {
   type Modulo,
   type Rol,
 } from '../../api/resources';
+import AccionesFila from '../../components/AccionesFila';
+import EstadoBadge from '../../components/EstadoBadge';
 import Modal from '../../components/Modal';
+import ModalFormFooter from '../../components/ModalFormFooter';
+import { useAuth } from '../../auth/AuthContext';
 
 const FORM_VACIO = { nombre: '', descripcion: '' };
 
 export default function RolesPage() {
+  const { sesion, refrescarMenus } = useAuth();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [menus, setMenus] = useState<MenuPlano[]>([]);
@@ -99,6 +104,10 @@ export default function RolesPage() {
       await rolesApi.asignarModulo(rolId, moduloParaAsignar);
       setAviso('Módulo vinculado al rol.');
       setModuloParaAsignar('');
+      // El árbol de menús vive en la sesión (se resolvió una vez en
+      // select-role): si el rol vinculado es el rol activo, se refresca
+      // solo para no depender de un re-login para ver el cambio.
+      if (sesion?.rol.id === rolId) await refrescarMenus();
     } catch (e) {
       setError(mensajeError(e));
     }
@@ -110,6 +119,7 @@ export default function RolesPage() {
       await rolesApi.asignarMenu(rolId, menuParaAsignar);
       setAviso('Menú vinculado al rol.');
       setMenuParaAsignar('');
+      if (sesion?.rol.id === rolId) await refrescarMenus();
     } catch (e) {
       setError(mensajeError(e));
     }
@@ -145,14 +155,12 @@ export default function RolesPage() {
               />
             </label>
           </div>
-          <div className="acciones-form">
-            <button className="boton-primario" onClick={guardar}>
-              <i className="bi bi-check-lg" /> {editandoId ? 'Guardar cambios' : 'Crear rol'}
-            </button>
-            <button className="boton-secundario" onClick={() => setMostrarForm(false)}>
-              Cancelar
-            </button>
-          </div>
+          <ModalFormFooter
+            editando={!!editandoId}
+            textoCrear="Crear rol"
+            onGuardar={guardar}
+            onCancelar={() => setMostrarForm(false)}
+          />
         </Modal>
       )}
 
@@ -175,21 +183,13 @@ export default function RolesPage() {
                   <td>{r.nombre}</td>
                   <td>{r.descripcion ?? '—'}</td>
                   <td>
-                    <span className={`badge-estado ${r.estado === 'ACTIVO' ? 'ok' : 'off'}`}>
-                      {r.estado}
-                    </span>
+                    <EstadoBadge estado={r.estado} />
                   </td>
-                  <td className="celda-acciones">
+                  <AccionesFila onEditar={() => abrirEditar(r)} onEliminar={() => eliminar(r)}>
                     <button onClick={() => alternarExpandido(r)}>
                       <i className="bi bi-diagram-3" /> {expandidoId === r.id ? 'Ocultar' : 'Vincular módulo/menú'}
                     </button>
-                    <button onClick={() => abrirEditar(r)}>
-                      <i className="bi bi-pencil" /> Editar
-                    </button>
-                    <button className="boton-peligro" onClick={() => eliminar(r)}>
-                      <i className="bi bi-trash" /> Eliminar
-                    </button>
-                  </td>
+                  </AccionesFila>
                 </tr>
                 {expandidoId === r.id && (
                   <tr className="fila-expandida">

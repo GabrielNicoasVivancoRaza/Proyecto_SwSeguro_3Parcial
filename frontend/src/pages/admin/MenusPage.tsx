@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { mensajeError, menusApi, modulosApi, type MenuPlano, type Modulo } from '../../api/resources';
+import AccionesFila from '../../components/AccionesFila';
+import EstadoBadge from '../../components/EstadoBadge';
 import Modal from '../../components/Modal';
+import ModalFormFooter from '../../components/ModalFormFooter';
 
 const FORM_VACIO = { nombre: '', moduloId: '', parentId: '', url: '', orden: 0 };
 
@@ -163,14 +166,13 @@ export default function MenusPage() {
               />
             </label>
           </div>
-          <div className="acciones-form">
-            <button className="boton-primario" onClick={guardar} disabled={!form.moduloId}>
-              <i className="bi bi-check-lg" /> {editandoId ? 'Guardar cambios' : 'Crear menú'}
-            </button>
-            <button className="boton-secundario" onClick={() => setMostrarForm(false)}>
-              Cancelar
-            </button>
-          </div>
+          <ModalFormFooter
+            editando={!!editandoId}
+            textoCrear="Crear menú"
+            onGuardar={guardar}
+            onCancelar={() => setMostrarForm(false)}
+            disabled={!form.moduloId}
+          />
         </Modal>
       )}
 
@@ -196,18 +198,9 @@ export default function MenusPage() {
                 <td>{nombrePadre(m.parentId)}</td>
                 <td>{m.url ?? '—'}</td>
                 <td>
-                  <span className={`badge-estado ${m.estado === 'ACTIVO' ? 'ok' : 'off'}`}>
-                    {m.estado}
-                  </span>
+                  <EstadoBadge estado={m.estado} />
                 </td>
-                <td className="celda-acciones">
-                  <button onClick={() => abrirEditar(m)}>
-                    <i className="bi bi-pencil" /> Editar
-                  </button>
-                  <button className="boton-peligro" onClick={() => eliminar(m)}>
-                    <i className="bi bi-trash" /> Eliminar
-                  </button>
-                </td>
+                <AccionesFila onEditar={() => abrirEditar(m)} onEliminar={() => eliminar(m)} />
               </tr>
             ))}
           </tbody>
