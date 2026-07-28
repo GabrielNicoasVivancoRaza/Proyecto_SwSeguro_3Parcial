@@ -43,11 +43,15 @@ jobs:
 
       - name: Instalar dependencias del backend
         working-directory: backend
-        run: npm ci
+        # --ignore-scripts: ningún paquete (propio o transitivo) ejecuta
+        # scripts de instalación arbitrarios (endurecimiento supply-chain)
+        run: npm ci --ignore-scripts
 
       - name: Generar cliente Prisma
         working-directory: backend
-        run: npx prisma generate
+        # --no-install: usa el binario ya presente en node_modules/.bin,
+        # nunca descarga/ejecuta un paquete bajo demanda desde el registro
+        run: npx --no-install prisma generate
 
       - name: Build backend (NestJS)
         working-directory: backend
@@ -60,7 +64,7 @@ jobs:
       - name: Instalar y compilar frontend (React SPA)
         working-directory: frontend
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build
 
       - name: Publicar cobertura para SonarCloud
@@ -128,7 +132,12 @@ jobs:
 
       - name: Ejecutar análisis SAST avanzado sobre el diff (.ts/.py)
         run: |
-          python3 scripts/sast_ml_scan.py --base-ref "${{ github.event.before }}"
+          BASE_REF="${{ github.event.before }}"
+          # github.event.before viene vacío en ejecuciones manuales
+          # (workflow_dispatch): se resuelve al SHA del commit anterior
+          # (nunca se pasa sintaxis de revisión sin resolver al script).
+          if [ -z "$BASE_REF" ]; then BASE_REF="$(git rev-parse HEAD~1)"; fi
+          python3 scripts/sast_ml_scan.py --base-ref "$BASE_REF"
 
       - name: Notificar alerta de vulnerabilidad detectada
         if: failure()

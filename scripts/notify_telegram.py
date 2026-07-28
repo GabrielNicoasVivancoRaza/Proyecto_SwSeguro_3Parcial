@@ -18,6 +18,7 @@ Variables de entorno requeridas:
 from __future__ import annotations
 
 import os
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -25,6 +26,11 @@ import urllib.request
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
+# Formato real de un token de bot de BotFather: "<id numérico>:<hash>".
+# Validarlo antes de interpolarlo en la URL evita que un valor inesperado
+# (p. ej. con "/" o espacios) altere la ruta de la petición a la API.
+FORMATO_TOKEN_TELEGRAM = re.compile(r"^\d+:[A-Za-z0-9_-]+$")
 
 
 def main() -> int:
@@ -45,6 +51,10 @@ def main() -> int:
         )
         return 0
 
+    if not FORMATO_TOKEN_TELEGRAM.match(token):
+        print("[telegram] TELEGRAM_BOT_TOKEN tiene un formato inesperado; se omite la notificación.")
+        return 0
+
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     datos = urllib.parse.urlencode(
         {
@@ -56,7 +66,13 @@ def main() -> int:
     ).encode()
 
     try:
-        with urllib.request.urlopen(
+        # El esquema ("https://") y el host ("api.telegram.org") son literales
+        # fijos en el código; la única parte dinámica es el token, ya validado
+        # arriba contra FORMATO_TOKEN_TELEGRAM (sin "/" ni caracteres que
+        # puedan alterar la ruta). No hay forma de que esta URL apunte a
+        # file:// ni a un host distinto — la regla de abajo es puramente
+        # sintáctica y no distingue esto.
+        with urllib.request.urlopen(  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             urllib.request.Request(url, data=datos, method="POST"),
             timeout=10,
         ) as respuesta:

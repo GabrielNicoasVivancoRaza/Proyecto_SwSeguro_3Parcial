@@ -407,8 +407,26 @@ button {
   font-weight: 600;
 }
 
-.boton-salir:hover {
+.boton-salir:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.boton-salir:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.girando {
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .contenido {

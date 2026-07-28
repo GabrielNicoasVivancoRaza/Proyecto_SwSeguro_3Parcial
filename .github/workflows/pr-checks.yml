@@ -21,11 +21,15 @@ jobs:
 
       - name: Instalar dependencias del backend
         working-directory: backend
-        run: npm ci
+        # --ignore-scripts: ningún paquete (propio o transitivo) ejecuta
+        # scripts de instalación arbitrarios (endurecimiento supply-chain)
+        run: npm ci --ignore-scripts
 
       - name: Generar cliente Prisma
         working-directory: backend
-        run: npx prisma generate
+        # --no-install: usa el binario ya presente en node_modules/.bin,
+        # nunca descarga/ejecuta un paquete bajo demanda desde el registro
+        run: npx --no-install prisma generate
 
       - name: Build backend
         working-directory: backend
@@ -38,5 +42,5 @@ jobs:
       - name: Instalar y compilar frontend
         working-directory: frontend
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build
