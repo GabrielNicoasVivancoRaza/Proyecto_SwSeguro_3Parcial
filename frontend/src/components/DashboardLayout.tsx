@@ -1,5 +1,6 @@
-import { Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { claseIcono } from '../auth/menuUtils';
 import SidebarMenu from './SidebarMenu';
 
 export default function DashboardLayout() {
@@ -18,21 +19,35 @@ export default function DashboardLayout() {
     <div className="dashboard">
       <aside className="sidebar">
         <div className="sidebar-cabecera">
-          <h2>Master Gateway</h2>
-          <span className="chip-rol">{sesion.rol.nombre}</span>
+          <span className="icono-marca">
+            <i className="bi bi-shield-lock-fill" />
+          </span>
+          <div>
+            <h2>Master Gateway</h2>
+            <span className="chip-rol">
+              <i className="bi bi-person-check" /> {sesion.rol.nombre}
+            </span>
+          </div>
         </div>
 
         <nav>
+          <NavLink to="/" end className={({ isActive }) => (isActive ? 'enlace-inicio activo' : 'enlace-inicio')}>
+            <i className="bi bi-speedometer2" /> Panel general
+          </NavLink>
+
           {sesion.menus.map(({ modulo, menus }) => (
             <div key={modulo.id} className="bloque-modulo">
-              <h3>{modulo.nombre}</h3>
+              <h3>
+                <i className={`bi bi-${claseIcono(modulo.icono, 'folder')}`} />
+                {modulo.nombre}
+              </h3>
               <SidebarMenu menus={menus} />
             </div>
           ))}
         </nav>
 
         <button className="boton-salir" onClick={salir}>
-          Cerrar sesión
+          <i className="bi bi-box-arrow-right" /> Cerrar sesión
         </button>
       </aside>
 
