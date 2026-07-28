@@ -44,3 +44,7 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npm run build
+
+      - name: Pruebas unitarias del frontend
+        working-directory: frontend
+        run: npm test
