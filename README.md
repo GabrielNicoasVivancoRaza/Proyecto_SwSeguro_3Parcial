@@ -67,7 +67,8 @@ propia base de datos de usuarios.
 ## 🖼️ Diagrama de flujo del sistema
 
 
-![alt text](src/assets/diagrama-flujo.png)
+<img width="1024" height="572" alt="image" src="https://github.com/user-attachments/assets/2ab85b10-6116-4e91-9cbb-461fab75e8ad" />
+
 
 ---
 
