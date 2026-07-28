@@ -1,12 +1,32 @@
 import { NavLink } from 'react-router-dom';
-import { claseIcono } from '../auth/menuUtils';
+import { claseIcono, esUrlExterna } from '../auth/menuUtils';
 import type { NodoMenu } from '../auth/types';
 
 /**
  * Renderizado RECURSIVO del árbol de menús: los nodos con url (hojas)
- * son enlaces; los intermedios son agrupadores jerárquicos.
+ * son enlaces; los intermedios son agrupadores jerárquicos. Una hoja con
+ * URL externa (ej. el frontend propio de un microservicio hijo) se abre
+ * en pestaña nueva con un <a> normal — nunca como ruta interna del SPA.
  */
 function Nodo({ nodo, nivel }: { nodo: NodoMenu; nivel: number }) {
+  if (nodo.url && esUrlExterna(nodo.url)) {
+    return (
+      <li>
+        <a
+          href={nodo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="item"
+          style={{ paddingLeft: `${12 + nivel * 14}px` }}
+        >
+          <i className={`bi bi-${claseIcono(nodo.icono, 'box-arrow-up-right')}`} />
+          {nodo.nombre}
+          <i className="bi bi-box-arrow-up-right icono-externo" />
+        </a>
+      </li>
+    );
+  }
+
   if (nodo.url) {
     return (
       <li>

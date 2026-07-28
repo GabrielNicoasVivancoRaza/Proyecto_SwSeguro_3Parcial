@@ -25,12 +25,23 @@ export class CreateMenuDto {
   @IsUUID('4')
   parentId?: string;
 
-  /** Solo para nodos hoja (Items). Ruta relativa hacia el microservicio destino. */
+  /**
+   * Solo para nodos hoja (Items). Dos formas válidas:
+   *  - Ruta relativa interna del propio Master (ej. "/ventas/ordenes"),
+   *    renderizada por React Router.
+   *  - URL absoluta http(s) de un microservicio hijo con frontend propio
+   *    (ej. "http://localhost:5174"), que el cliente abre como enlace
+   *    externo — nunca como ruta interna.
+   * El esquema se restringe explícitamente a http/https: el valor se usa
+   * después como `href` en el sidebar, así que aceptar cualquier string
+   * abriría la puerta a esquemas peligrosos (ej. "javascript:alert(1)").
+   */
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  @Matches(/^\/[a-zA-Z0-9\-_/]*$/, {
-    message: 'url debe ser una ruta relativa (ej. /ventas/ordenes)',
+  @Matches(/^(\/[a-zA-Z0-9\-_/]*|https?:\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[a-zA-Z0-9\-_/%.]*)?)$/, {
+    message:
+      'url debe ser una ruta relativa (ej. /ventas/ordenes) o una URL http(s) externa (ej. http://localhost:5174)',
   })
   url?: string;
 

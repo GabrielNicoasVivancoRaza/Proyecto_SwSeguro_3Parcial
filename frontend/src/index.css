@@ -391,6 +391,13 @@ button {
   flex-shrink: 0;
 }
 
+.menu .item .icono-externo {
+  width: auto;
+  margin-left: auto;
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
 .boton-salir {
   display: flex;
   align-items: center;
@@ -568,6 +575,12 @@ button {
 .tarjeta-acceso span {
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+.icono-acceso-externo {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--texto-mudo);
 }
 
 .panel-vacio {
