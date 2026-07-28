@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -37,11 +38,25 @@ if hasattr(sys.stdout, "reconfigure"):
 EXTENSIONES_ANALIZABLES = {".ts", ".py"}
 SEVERIDADES_BLOQUEANTES = {"ERROR", "WARNING"}  # Semgrep: ERROR ~ HIGH/CRITICAL
 
+# Nombres de rama/SHA válidos únicamente (letras, dígitos, . _ / -), y NUNCA
+# empezando con "-": un valor como "--upload-pack=..." pasado sin validar a
+# `git diff` se interpretaría como una opción, no como una referencia
+# (inyección de argumentos de CLI). --base-ref puede venir de un input de
+# workflow, así que se valida antes de tocar subprocess.
+REFERENCIA_SEGURA = re.compile(r"^[A-Za-z0-9._/]+[A-Za-z0-9._/-]*$")
+
+
+def validar_referencia(base_ref: str) -> str:
+    if not REFERENCIA_SEGURA.match(base_ref):
+        raise ValueError(f"Referencia git no válida o potencialmente peligrosa: {base_ref!r}")
+    return base_ref
+
 
 def archivos_modificados(base_ref: str) -> list[str]:
     """Diff contra la rama base: solo se analiza lo que cambió en el commit."""
+    base_ref = validar_referencia(base_ref)
     resultado = subprocess.run(
-        ["git", "diff", "--name-only", "--diff-filter=ACMR", f"{base_ref}...HEAD"],
+        ["git", "diff", "--name-only", "--diff-filter=ACMR", f"{base_ref}...HEAD", "--"],
         capture_output=True,
         text=True,
         check=False,
@@ -91,7 +106,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    objetivos = archivos_modificados(args.base_ref)
+    try:
+        objetivos = archivos_modificados(args.base_ref)
+    except ValueError as error:
+        print(f"[sast-ml] ERROR: {error}")
+        return 1
     if not objetivos:
         print("[sast-ml] Sin archivos .ts/.py modificados relevantes. Nada que analizar.")
         return 0

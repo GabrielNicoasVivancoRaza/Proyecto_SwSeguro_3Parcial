@@ -407,8 +407,26 @@ button {
   font-weight: 600;
 }
 
-.boton-salir:hover {
+.boton-salir:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.boton-salir:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.girando {
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .contenido {
@@ -988,5 +1006,350 @@ button {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+}
+
+
+
+
+/* ============================================================
+   Login rediseñado v3 — panel más compacto + slider más grande
+   + divisor curvo
+   ============================================================ */
+
+.login-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ---- Panel formulario (izquierda, compacto) ---- */
+.login-panel-formulario {
+  flex: 0 0 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  position: relative;
+  padding: 48px;
+}
+
+.login-panel-formulario::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 90%, #eaf2fd 0%, transparent 42%),
+    radial-gradient(circle at 90% 6%, #f2f6fc 0%, transparent 38%);
+  pointer-events: none;
+}
+
+.login-form-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  animation: login-aparecer 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.login-marca .icono-marca {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  font-size: 1.3rem;
+}
+
+.login-marca h1 {
+  font-size: 1.35rem;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.login-marca-sub {
+  margin: 3px 0 0;
+  font-size: 0.78rem;
+  color: var(--texto-mudo);
+  font-weight: 500;
+}
+
+.login-divisor {
+  height: 1px;
+  background: var(--borde);
+  margin: 0 0 26px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form .subtitulo {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.login-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.login-input-grupo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icono {
+  position: absolute;
+  left: 13px;
+  color: var(--texto-mudo);
+  font-size: 0.92rem;
+  pointer-events: none;
+}
+
+.login-input-grupo input {
+  width: 100%;
+  padding: 12px 14px 12px 38px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 10px;
+  font-size: 0.94rem;
+  font-family: inherit;
+  color: var(--texto);
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-input-grupo input::placeholder {
+  color: #b7bccb;
+}
+
+.login-input-grupo input:focus {
+  outline: none;
+  border-color: var(--primario);
+  box-shadow: 0 0 0 4px var(--primario-suave);
+}
+
+.login-boton-submit {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2f82df 0%, var(--primario-fuerte) 100%);
+  color: #fff;
+  font-size: 0.96rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 20px -6px rgba(28, 92, 171, 0.5);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.login-boton-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(28, 92, 171, 0.58);
+}
+
+.login-boton-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-boton-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  box-shadow: none;
+}
+
+.login-spinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: login-girar 0.7s linear infinite;
+}
+
+.login-footer-nota {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--texto-mudo);
+}
+
+@keyframes login-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes login-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Divisor curvo entre panel formulario y slider ---- */
+.login-curva-divisora {
+  position: absolute;
+  top: 0;
+  right: -40px;
+  width: 90px;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.login-curva-divisora svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.login-curva-divisora path {
+  fill: #ffffff;
+  filter: drop-shadow(4px 0 24px rgba(22, 26, 36, 0.1));
+}
+
+/* ---- Slider (derecha, más grande) ---- */
+.login-slider {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #0a0e1a;
+}
+
+.login-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.1s ease-in-out;
+}
+
+.login-slide.activo {
+  opacity: 1;
+  z-index: 1;
+  animation: login-kenburns 7s ease-out forwards;
+}
+
+.login-slide-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 12, 24, 0.2) 0%,
+    rgba(8, 12, 24, 0.32) 45%,
+    rgba(8, 12, 24, 0.86) 100%
+  );
+  pointer-events: none;
+}
+
+.login-slide-contenido {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 60px;
+}
+
+.login-slide-texto {
+  color: #fff;
+  margin-bottom: 28px;
+  max-width: 560px;
+}
+
+.login-slide-texto h2 {
+  font-size: 2.15rem;
+  margin: 0 0 12px;
+  letter-spacing: -0.015em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+}
+
+.login-slide-texto p {
+  font-size: 1.05rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.5;
+}
+
+.login-slide-indicadores {
+  display: flex;
+  gap: 10px;
+}
+
+.login-indicador {
+  width: 28px;
+  height: 4px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.32);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, width 0.25s;
+}
+
+.login-indicador.activo {
+  background: #fff;
+  width: 42px;
+}
+
+@keyframes login-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.07);
+  }
+}
+
+/* ---- Responsive: ocultar slider bajo 900px ---- */
+@media (max-width: 900px) {
+  .login-slider {
+    display: none;
+  }
+
+  .login-curva-divisora {
+    display: none;
+  }
+
+  .login-panel-formulario {
+    flex: 1 1 100%;
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .login-panel-formulario {
+    padding: 24px 18px;
   }
 }

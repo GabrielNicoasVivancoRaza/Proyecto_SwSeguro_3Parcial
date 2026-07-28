@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useState } from 'react';
 import { mensajeError, rolesApi, usuariosApi, type Rol, type Usuario, type UsuarioDetalle } from '../../api/resources';
+import AccionesFila from '../../components/AccionesFila';
+import EstadoBadge from '../../components/EstadoBadge';
 import Modal from '../../components/Modal';
+import ModalFormFooter from '../../components/ModalFormFooter';
 
 const FORM_VACIO = { email: '', username: '', nombreCompleto: '', password: '' };
 
@@ -167,14 +170,12 @@ export default function UsersPage() {
               <small>Debe incluir mayúscula, minúscula, número y símbolo.</small>
             </label>
           </div>
-          <div className="acciones-form">
-            <button className="boton-primario" onClick={guardar}>
-              <i className="bi bi-check-lg" /> {editandoId ? 'Guardar cambios' : 'Crear usuario'}
-            </button>
-            <button className="boton-secundario" onClick={() => setMostrarForm(false)}>
-              Cancelar
-            </button>
-          </div>
+          <ModalFormFooter
+            editando={!!editandoId}
+            textoCrear="Crear usuario"
+            onGuardar={guardar}
+            onCancelar={() => setMostrarForm(false)}
+          />
         </Modal>
       )}
 
@@ -200,21 +201,13 @@ export default function UsersPage() {
                     <td>{u.username}</td>
                     <td>{u.nombreCompleto}</td>
                     <td>
-                      <span className={`badge-estado ${u.estado === 'ACTIVO' ? 'ok' : 'off'}`}>
-                        {u.estado}
-                      </span>
+                      <EstadoBadge estado={u.estado} />
                     </td>
-                    <td className="celda-acciones">
+                    <AccionesFila onEditar={() => abrirEditar(u)} onEliminar={() => eliminar(u)}>
                       <button onClick={() => alternarExpandido(u)}>
                         <i className="bi bi-people" /> {expandidoId === u.id ? 'Ocultar roles' : 'Ver roles'}
                       </button>
-                      <button onClick={() => abrirEditar(u)}>
-                        <i className="bi bi-pencil" /> Editar
-                      </button>
-                      <button className="boton-peligro" onClick={() => eliminar(u)}>
-                        <i className="bi bi-trash" /> Eliminar
-                      </button>
-                    </td>
+                    </AccionesFila>
                   </tr>
                   {expandidoId === u.id && detalle && (
                     <tr className="fila-expandida">
