@@ -33,8 +33,13 @@ export default function LoginPage() {
   return (
     <div className="pantalla-centrada">
       <form className="tarjeta" onSubmit={onSubmit}>
-        <h1>Master Gateway</h1>
-        <p className="subtitulo">Inicio de sesión</p>
+        <div className="marca">
+          <span className="icono-marca">
+            <i className="bi bi-shield-lock-fill" />
+          </span>
+          <h1>Master Gateway</h1>
+        </div>
+        <p className="subtitulo">Inicia sesión para continuar</p>
 
         <label>
           Email
@@ -45,6 +50,7 @@ export default function LoginPage() {
             required
             maxLength={254}
             autoComplete="username"
+            autoFocus
           />
         </label>
 
@@ -61,7 +67,11 @@ export default function LoginPage() {
           />
         </label>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error">
+            <i className="bi bi-exclamation-triangle" /> {error}
+          </p>
+        )}
 
         <button type="submit" disabled={cargando}>
           {cargando ? 'Verificando…' : 'Ingresar'}

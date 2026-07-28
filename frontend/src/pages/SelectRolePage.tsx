@@ -31,10 +31,13 @@ export default function SelectRolePage() {
   return (
     <div className="pantalla-centrada">
       <div className="tarjeta">
-        <h1>Espacio de trabajo</h1>
-        <p className="subtitulo">
-          Selecciona el rol con el que deseas operar en esta sesión
-        </p>
+        <div className="marca">
+          <span className="icono-marca">
+            <i className="bi bi-diagram-3-fill" />
+          </span>
+          <h1>Espacio de trabajo</h1>
+        </div>
+        <p className="subtitulo">Selecciona el rol con el que deseas operar en esta sesión</p>
 
         <div className="lista-roles">
           {pendiente.roles.map((rol) => (
@@ -44,13 +47,22 @@ export default function SelectRolePage() {
               disabled={eligiendo !== null}
               onClick={() => elegir(rol.id)}
             >
-              <strong>{rol.nombre}</strong>
-              {rol.descripcion && <span>{rol.descripcion}</span>}
+              <span className="icono-rol">
+                <i className="bi bi-person-badge" />
+              </span>
+              <span className="texto-rol">
+                <strong>{rol.nombre}</strong>
+                {rol.descripcion && <span>{rol.descripcion}</span>}
+              </span>
             </button>
           ))}
         </div>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <p className="error">
+            <i className="bi bi-exclamation-triangle" /> {error}
+          </p>
+        )}
       </div>
     </div>
   );
