@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { modulosApi, rolesApi, usuariosApi, menusApi } from '../api/resources';
 import { useAuth } from '../auth/AuthContext';
-import { claseIcono, itemsDeSesion, tieneAcceso } from '../auth/menuUtils';
+import { claseIcono, esUrlExterna, itemsDeSesion, tieneAcceso } from '../auth/menuUtils';
 
 interface Kpi {
   clave: string;
@@ -141,14 +141,30 @@ export default function HomePage() {
         <div className="panel-vacio">Tu rol no tiene ítems de menú asignados todavía.</div>
       ) : (
         <div className="grid-accesos">
-          {items.map((item) => (
-            <Link key={item.id} to={item.url!} className="tarjeta-acceso">
-              <span className="icono-acceso">
-                <i className={`bi bi-${claseIcono(item.icono, 'link-45deg')}`} />
-              </span>
-              <span>{item.nombre}</span>
-            </Link>
-          ))}
+          {items.map((item) =>
+            esUrlExterna(item.url!) ? (
+              <a
+                key={item.id}
+                href={item.url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tarjeta-acceso"
+              >
+                <span className="icono-acceso">
+                  <i className={`bi bi-${claseIcono(item.icono, 'box-arrow-up-right')}`} />
+                </span>
+                <span>{item.nombre}</span>
+                <i className="bi bi-box-arrow-up-right icono-acceso-externo" />
+              </a>
+            ) : (
+              <Link key={item.id} to={item.url!} className="tarjeta-acceso">
+                <span className="icono-acceso">
+                  <i className={`bi bi-${claseIcono(item.icono, 'link-45deg')}`} />
+                </span>
+                <span>{item.nombre}</span>
+              </Link>
+            ),
+          )}
         </div>
       )}
     </section>

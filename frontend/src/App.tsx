@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
-import { itemsDeSesion } from './auth/menuUtils';
+import { esUrlExterna, itemsDeSesion } from './auth/menuUtils';
 import DashboardLayout from './components/DashboardLayout';
 import ModulesPage from './pages/admin/ModulesPage';
 import MenusPage from './pages/admin/MenusPage';
@@ -39,6 +39,10 @@ function RutasDinamicas() {
   const { sesion } = useAuth();
 
   const items = sesion ? itemsDeSesion(sesion.menus) : [];
+  // Un ítem con URL externa (ej. el frontend propio de un microservicio
+  // hijo) nunca es una ruta interna del SPA — se abre con un <a> normal
+  // desde el sidebar/HomePage, jamás se registra en React Router.
+  const itemsInternos = items.filter((item) => !esUrlExterna(item.url!));
 
   return (
     <Routes>
@@ -47,7 +51,7 @@ function RutasDinamicas() {
 
       <Route path="/" element={<DashboardLayout />}>
         <Route index element={<HomePage />} />
-        {items.map((item) => {
+        {itemsInternos.map((item) => {
           const Pagina = PAGINAS_REGISTRADAS[item.url!] ?? (() => <DynamicPage titulo={item.nombre} />);
           return <Route key={item.id} path={item.url!} element={<Pagina />} />;
         })}
