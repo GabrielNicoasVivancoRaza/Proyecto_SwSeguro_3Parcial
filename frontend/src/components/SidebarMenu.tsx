@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { claseIcono } from '../auth/menuUtils';
 import type { NodoMenu } from '../auth/types';
 
 /**
@@ -14,6 +15,7 @@ function Nodo({ nodo, nivel }: { nodo: NodoMenu; nivel: number }) {
           className={({ isActive }) => (isActive ? 'item activo' : 'item')}
           style={{ paddingLeft: `${12 + nivel * 14}px` }}
         >
+          <i className={`bi bi-${claseIcono(nodo.icono, 'dot')}`} />
           {nodo.nombre}
         </NavLink>
       </li>
@@ -23,6 +25,7 @@ function Nodo({ nodo, nivel }: { nodo: NodoMenu; nivel: number }) {
   return (
     <li>
       <span className="grupo" style={{ paddingLeft: `${12 + nivel * 14}px` }}>
+        <i className={`bi bi-${claseIcono(nodo.icono, 'chevron-right')}`} />
         {nodo.nombre}
       </span>
       {nodo.hijos.length > 0 && (

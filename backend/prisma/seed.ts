@@ -71,24 +71,25 @@ async function main() {
   }
 
   // ---------- Módulos ----------
+  // icono = nombre de clase de Bootstrap Icons (sin el prefijo "bi-")
   const modAdministracion = await prisma.modulo.upsert({
     where: { nombre: 'Administración' },
-    update: {},
+    update: { icono: 'gear-fill' },
     create: {
       nombre: 'Administración',
       descripcion: 'Gestión de identidad, módulos y menús',
-      icono: 'settings',
+      icono: 'gear-fill',
       creadoPor: admin.id,
     },
   });
 
   const modVentas = await prisma.modulo.upsert({
     where: { nombre: 'Ventas' },
-    update: {},
+    update: { icono: 'cart-fill' },
     create: {
       nombre: 'Ventas',
       descripcion: 'Módulo de ventas (microservicio hijo futuro)',
-      icono: 'shopping-cart',
+      icono: 'cart-fill',
       creadoPor: admin.id,
     },
   });
@@ -107,35 +108,39 @@ async function main() {
   }
 
   // ---------- Menús (Adjacency List: url solo en nodos hoja) ----------
+  // icono = nombre de clase de Bootstrap Icons (sin el prefijo "bi-")
   async function menu(
     nombre: string,
     moduloId: string,
     parentId: string | null,
     url: string | null,
     orden: number,
+    icono: string,
   ) {
     const existente = await prisma.menu.findFirst({
       where: { nombre, moduloId, parentId },
     });
-    if (existente) return existente;
+    if (existente) {
+      return prisma.menu.update({ where: { id: existente.id }, data: { icono, url, orden } });
+    }
     return prisma.menu.create({
-      data: { nombre, moduloId, parentId, url, orden, creadoPor: admin.id },
+      data: { nombre, moduloId, parentId, url, orden, icono, creadoPor: admin.id },
     });
   }
 
   // Módulo Administración
-  const mAdminRoot = await menu('Administración', modAdministracion.id, null, null, 1);
-  const mUsuarios = await menu('Usuarios', modAdministracion.id, mAdminRoot.id, '/admin/usuarios', 1);
-  const mRoles = await menu('Roles', modAdministracion.id, mAdminRoot.id, '/admin/roles', 2);
-  const mModulos = await menu('Módulos', modAdministracion.id, mAdminRoot.id, '/admin/modulos', 3);
-  const mMenus = await menu('Menús', modAdministracion.id, mAdminRoot.id, '/admin/menus', 4);
+  const mAdminRoot = await menu('Administración', modAdministracion.id, null, null, 1, 'gear-fill');
+  const mUsuarios = await menu('Usuarios', modAdministracion.id, mAdminRoot.id, '/admin/usuarios', 1, 'people-fill');
+  const mRoles = await menu('Roles', modAdministracion.id, mAdminRoot.id, '/admin/roles', 2, 'shield-lock-fill');
+  const mModulos = await menu('Módulos', modAdministracion.id, mAdminRoot.id, '/admin/modulos', 3, 'grid-1x2-fill');
+  const mMenus = await menu('Menús', modAdministracion.id, mAdminRoot.id, '/admin/menus', 4, 'list-nested');
 
   // Módulo Ventas (con submenú intermedio para probar la recursividad)
-  const mVentasRoot = await menu('Ventas', modVentas.id, null, null, 1);
-  const mOrdenes = await menu('Órdenes', modVentas.id, mVentasRoot.id, null, 1);
-  const mCrearOrden = await menu('Crear Orden', modVentas.id, mOrdenes.id, '/ventas/ordenes/crear', 1);
-  const mListarOrdenes = await menu('Listar Órdenes', modVentas.id, mOrdenes.id, '/ventas/ordenes', 2);
-  const mReportes = await menu('Reportes', modVentas.id, mVentasRoot.id, '/ventas/reportes', 2);
+  const mVentasRoot = await menu('Ventas', modVentas.id, null, null, 1, 'cart-fill');
+  const mOrdenes = await menu('Órdenes', modVentas.id, mVentasRoot.id, null, 1, 'receipt');
+  const mCrearOrden = await menu('Crear Orden', modVentas.id, mOrdenes.id, '/ventas/ordenes/crear', 1, 'plus-circle');
+  const mListarOrdenes = await menu('Listar Órdenes', modVentas.id, mOrdenes.id, '/ventas/ordenes', 2, 'card-list');
+  const mReportes = await menu('Reportes', modVentas.id, mVentasRoot.id, '/ventas/reportes', 2, 'bar-chart-fill');
 
   // ---------- Rol <-> Menú ----------
   const rolMenus: Array<[string, string]> = [
