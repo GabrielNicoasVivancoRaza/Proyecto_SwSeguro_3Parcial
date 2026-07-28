@@ -67,11 +67,22 @@ jobs:
           npm ci --ignore-scripts
           npm run build
 
-      - name: Publicar cobertura para SonarCloud
+      - name: Pruebas unitarias del frontend + cobertura
+        working-directory: frontend
+        run: npm run test:cov
+
+      - name: Publicar cobertura del backend para SonarCloud
         uses: actions/upload-artifact@v4
         with:
           name: coverage-backend
           path: backend/coverage
+          retention-days: 1
+
+      - name: Publicar cobertura del frontend para SonarCloud
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: frontend/coverage
           retention-days: 1
 
   # ---------- Fase 2: Análisis Estático Tradicional (SonarCloud) ----------
@@ -87,6 +98,11 @@ jobs:
         with:
           name: coverage-backend
           path: backend/coverage
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-frontend
+          path: frontend/coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5

@@ -144,8 +144,8 @@ export const menusApi = {
 
 /** Extrae el mensaje de error del backend (class-validator o NestJS HttpException). */
 export function mensajeError(error: unknown): string {
-  const err = error as { response?: { data?: { message?: string | string[] } } };
-  const msg = err.response?.data?.message;
+  const err = error as { response?: { data?: { message?: string | string[] } } } | null | undefined;
+  const msg = err?.response?.data?.message;
   if (Array.isArray(msg)) return msg.join(' · ');
   return msg ?? 'Ocurrió un error inesperado';
 }

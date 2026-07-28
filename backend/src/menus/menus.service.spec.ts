@@ -1,8 +1,8 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { MenusService } from './menus.service';
-import type { UpdateMenuDto } from './dto/menu.dto';
+import type { CreateMenuDto, UpdateMenuDto } from './dto/menu.dto';
 
 /**
  * Prueba de seguridad/integridad unitaria (Shift-Left, OE2): el patrón
@@ -18,7 +18,7 @@ describe('MenusService (validación de ciclos en parent_id)', () => {
   beforeEach(async () => {
     prisma = {
       activo: {
-        menu: { findFirst: jest.fn() },
+        menu: { findFirst: jest.fn(), findMany: jest.fn() },
         modulo: { findFirst: jest.fn() },
       },
       menu: {
@@ -98,5 +98,105 @@ describe('MenusService (validación de ciclos en parent_id)', () => {
         'actor',
       ),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  describe('CRUD y árbol', () => {
+    it('findAll ordena por módulo y orden', async () => {
+      prisma.activo.menu.findMany.mockResolvedValue([{ id: 'm1' }]);
+      const resultado = await service.findAll();
+      expect(prisma.activo.menu.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: [{ moduloId: 'asc' }, { orden: 'asc' }] }),
+      );
+      expect(resultado).toEqual([{ id: 'm1' }]);
+    });
+
+    it('findOne lanza 404 si el menú no existe', async () => {
+      prisma.activo.menu.findFirst.mockResolvedValue(null);
+      await expect(service.findOne('inexistente')).rejects.toThrow(NotFoundException);
+    });
+
+    it('create rechaza si el módulo no existe', async () => {
+      prisma.activo.modulo.findFirst.mockResolvedValue(null);
+      const dto = { nombre: 'Item', moduloId: 'mod-x' } as CreateMenuDto;
+      await expect(service.create(dto, 'actor')).rejects.toThrow(NotFoundException);
+    });
+
+    it('create rechaza un padre de otro módulo', async () => {
+      prisma.activo.modulo.findFirst.mockResolvedValue({ id: 'mod1' });
+      prisma.activo.menu.findFirst.mockResolvedValue({ id: 'padre', moduloId: 'mod2' });
+      const dto = { nombre: 'Item', moduloId: 'mod1', parentId: 'padre' } as CreateMenuDto;
+      await expect(service.create(dto, 'actor')).rejects.toThrow(BadRequestException);
+    });
+
+    it('create construye el registro con valores por defecto (url/parentId null, orden 0)', async () => {
+      prisma.activo.modulo.findFirst.mockResolvedValue({ id: 'mod1' });
+      prisma.menu.create.mockResolvedValue({ id: 'nuevo' });
+
+      await service.create({ nombre: 'Raíz', moduloId: 'mod1' } as CreateMenuDto, 'actor');
+
+      expect(prisma.menu.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          nombre: 'Raíz',
+          moduloId: 'mod1',
+          parentId: null,
+          url: null,
+          orden: 0,
+          creadoPor: 'actor',
+        }),
+      });
+    });
+
+    it('remove inactiva el menú (soft delete)', async () => {
+      prisma.activo.menu.findFirst.mockResolvedValue({ id: 'm1' });
+      const resultado = await service.remove('m1', 'actor');
+      expect(prisma.menu.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'm1' },
+          data: expect.objectContaining({ estado: 'INACTIVO' }),
+        }),
+      );
+      expect(resultado.message).toMatch(/inactivado/);
+    });
+
+    it('tree arma la jerarquía agrupada por módulo a partir de las filas del CTE', async () => {
+      prisma.$queryRaw.mockResolvedValue([
+        {
+          id: 'raiz',
+          nombre: 'Ventas',
+          url: null,
+          icono: null,
+          orden: 1,
+          parent_id: null,
+          modulo_id: 'mod1',
+          modulo_nombre: 'Ventas',
+          modulo_icono: 'cart',
+        },
+        {
+          id: 'hijo',
+          nombre: 'Crear Orden',
+          url: '/ventas/ordenes/crear',
+          icono: null,
+          orden: 1,
+          parent_id: 'raiz',
+          modulo_id: 'mod1',
+          modulo_nombre: 'Ventas',
+          modulo_icono: 'cart',
+        },
+      ]);
+
+      const arbol = await service.tree('rol1');
+
+      expect(arbol).toHaveLength(1);
+      expect(arbol[0].modulo.nombre).toBe('Ventas');
+      expect(arbol[0].menus).toHaveLength(1);
+      expect(arbol[0].menus[0].hijos[0].nombre).toBe('Crear Orden');
+      expect(arbol[0].menus[0].hijos[0].url).toBe('/ventas/ordenes/crear');
+    });
+
+    it('tree devuelve arreglo vacío cuando el rol no tiene menús asignados', async () => {
+      prisma.$queryRaw.mockResolvedValue([]);
+      const arbol = await service.tree('rol-sin-menus');
+      expect(arbol).toEqual([]);
+    });
   });
 });
